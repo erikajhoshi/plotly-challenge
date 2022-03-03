@@ -1,0 +1,16 @@
+.container {
+    background-color: lightblue;
+}
+
+.col-md-12 {
+    background-image: url("../Images/microbial-diversity.png");
+    background-size: auto;
+}
+
+.p {
+    font-weight: 1000;
+}
+
+.well {
+    background-color: skyblue;
+}
