@@ -1,88 +1,104 @@
 function buildData(ID) {
-    d3.json("samples.json").then((data) => {
-        var metadata = data.metadata;
-        var samples = data.samples;
-        var filteredMetaData = metadata.filter(samplename => samplename.id == ID);
-        var MetaData = filteredMetaData[0];
-        var filteredSamples = samples.filter(samplename => samplename.id == ID);
-        var Samples = filteredSamples[0];
-        
-        var otu_id = Samples.otu_id;
-        var otu_labels = Samples.otu_labels;
-        var sample_values = Samples.sample_values;
 
-        var trace1 = {
-            x: sample_values.slice(0, 10).reverse(),
-            y: otu_id.slice(0, 10).map(otu_id => `OTU ${otu_id}`).reverse(),
-            text: otu_labels.slice(0, 10).reverse(),
-            type: 'bar',
-            orientation: 'h'
-        };
-        
-        let bar_data = [trace1]; 
+    d3.json("samples.json").then((Data) => {
 
-        var bar_layout = {
-            title: "Top 10 Microbial Species (OTUs) found in Individual Belly Button Samples",
-            xaxis: {title: "OTU Sample Values"},
-            yaxis: {title: "OTU ID Numbers"}
-        };
+        var filtered_Data = Data.metadata;
 
-        Plotly.newPlot("bar", bar_data, bar_layout);
+        var sample = filtered_Data.filter(item => item.id == ID);
 
-        var trace2 = {
-            x: otu_id,
-            y: sample_values.slice(0, 10).reverse(),
-            text: otu_labels,
-            mode: "markers",
-            marker: {
-                size: sample_values.slice(0, 10).reverse(),
-                color: otu_id
-            }
-        };
+        var metadata = d3.select("#sample-metadata").html("");
 
-        let bubble_data = [trace2];
-
-        var bubble_layout = {
-            title: "Top 10 OTUs in Individual Belly Button Samples",
-            xaxis: {title: "OTU ID Numbers"},
-            yaxis: {title: "Sample Values"}
-        };
-
-        Plotly,newPlot("bubble", bubble_data, bubble_layout);
+        Object.entries(sample[0]).forEach(([key, value]) => {
+            metadata.append("p").text(`${key}: ${value}`);
+        });
     });
 }
 
-function demographicInfo(ID) {
-    var demoInfo = d3.select ("#sample-metadata");
-    demoInfo.html("");
-    d3.json("samples.json").then(data => {
-        var metadata = data.metadata;
-        var filteredMetaData = metadata.filter(samplename => samplename.id == ID);
-        var MetaData = filteredMetaData[0];
-        Object.entries(MetaData).forEach(([key, value]) => {
-            demoInfo.append("h6").text(`${key}: ${value}`)
-        })
-    })
-};
+function buildCharts(ID) {
+
+    d3.json("samples.json").then((Data) => {
+
+        var filtered_Data = Data.samples;
+
+        var sample_Dict = filtered_Data.filter(item => item.id == ID)[0];
+
+        var sampleValues = sample_Dict.sample_values; 
+        var barChartValues = sampleValues.slice(0, 10).reverse();
+
+        var id_Values = sample_Dict.otu_ids;
+        var barChartLabels = id_Values.slice(0, 10).reverse();
+
+        var newLabels = [];
+        barChartLabels.forEach((label) => {
+            newLabels.push("OTU " + label);
+        });
+
+        var hovertext = sample_Dict.otu_labels;
+        var barCharthovertext = hovertext.slice(0, 10).reverse();
+
+        var barChartTrace = {
+            type: "bar",
+            y: newLabels,
+            x: barChartValues,
+            text: barCharthovertext,
+            orientation: 'h'
+        };
+
+        var barChartData = [barChartTrace];
+
+        Plotly.newPlot("bar", barChartData);
+
+
+        var bubbleChartTrace = {
+            x: id_Values,
+            y: sampleValues,
+            text: hovertext,
+            mode: "markers",
+            marker: {
+                color: id_Values,
+                size: sampleValues
+            }
+        };
+
+        var bubbleChartData = [bubbleChartTrace];
+
+        var layout = {
+            showlegend: false,
+            height: 600,
+            width: 1000,
+            xaxis: {
+                title: "OTU ID"
+            }
+        };
+
+        Plotly.newPlot("bubble", bubbleChartData, layout);
+    });
+}
 
 function init() {
-    var dropdown = d3.select("#selDataset")
-    d3.json("samples.json").then((data) => {
-        var IDs = data.names;
-        IDs.forEach(ID => {
-            dropdown.append("option").text(ID).property("value", ID)
+
+    d3.json("samples.json").then((Data) => {
+
+        var filtered_Data = Data.names;
+
+        var dropdownMenu = d3.select("#selDataset");
+
+        filtered_Data.forEach((name) => {
+            dropdownMenu.append("option").property("value", name).text(name);
         })
-        buildData(IDs);
-        demographicInfo(IDs);
-    })
-};
+
+        buildData(filtered_Data[0]);
+
+        buildCharts(filtered_Data[0]);
+
+    });
+}
 
 function optionChanged(newID) {
-    buildData(newID);
-    demographicInfo(newID)
-};
-    
+
+    buildData(newID); 
+
+    buildCharts(newID);
+}
 
 init();
-
-
